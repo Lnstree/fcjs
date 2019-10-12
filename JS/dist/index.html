@@ -1,0 +1,107 @@
+<html>
+<div>
+    <input type="file" id="files"/>
+    <canvas id="c" width="256" height="240">
+
+    </canvas>
+</div>
+
+    <script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+    <script src="./webpack-fc.js"></script>
+    <script>
+        $("#import").click(function(){//点击导入按钮，使files触发点击事件，然后完成读取文件的操作。
+        $("#files").click();
+    });
+
+    var canvas = document.getElementById("c");
+    var gl = canvas.getContext("webgl")
+    var nes = fcgame.FC_Game();
+    var display = fcgame.FC_Display(gl);
+    nes.registerDisplay(display)
+
+    console.log(display)
+    console.log(nes)
+    display.init();
+
+    var selectedFile = document.getElementById("files");
+    selectedFile.onchange = function(){
+        var file = this.files[0]
+        var name = file.name;//读取选中文件的文件名
+        var size = file.size;//读取选中文件的大小
+        console.log("文件名:" + name + "大小：" + size);
+
+        var reader = new FileReader();//这里是核心！！！读取操作就是由它完成的。
+        reader.readAsArrayBuffer(file);//读取文件的内容
+        reader.onload = function () {
+            console.log(this.result);//当读取完成之后会回调这个函数，然后此时文件的内容存储到了result中。直接操作即可。
+            var  rom = new Uint8Array(this.result)
+            nes.load(rom);
+            setInterval(()=>{nes.cpu.run_frame()}, 1000/60)
+        };
+    }
+
+    document.onkeyup   = function(){
+        console.log(event.keyCode)
+        switch(event.keyCode)
+        {
+        case 87: // up
+            nes.player(0).release(1);
+            break;
+        case 83: // down
+            nes.player(0).release(2);
+            break;
+        case 65: // left
+            nes.player(0).release(3);
+            break;
+        case 68: // right
+            nes.player(0).release(4);
+            break;
+        case 74: // select 
+            nes.player(0).release(5);
+            break;
+        case 75: // tap
+            nes.player(0).release(6);
+            break;
+        case 77: // a
+            nes.player(0).release(7);
+            break;
+        case 78: // b
+            nes.player(0).release(8);
+            break;
+        }
+    }
+
+    document.onkeydown = function(){
+       switch(event.keyCode)
+        {
+        case 87: // up
+            nes.player(0).press(1);
+            break;
+        case 83: // down
+            nes.player(0).press(2);
+            break;
+        case 65: // left
+            nes.player(0).press(3);
+            break;
+        case 68: // right
+            nes.player(0).press(4);
+            break;
+        case 74:
+            nes.player(0).press(5);
+            break;
+        case 75:
+            nes.player(0).press(6);
+            break;
+        case 77:
+            nes.player(0).press(7);
+            break;
+        case 78:
+            nes.player(0).press(8);
+            break;
+        }
+    }
+
+
+    // Nes.test();
+    </script>
+</html>
