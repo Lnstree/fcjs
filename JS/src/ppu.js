@@ -1,18 +1,17 @@
-var Scanline = {VISIBLE:0, POST:1, NMI:2, PRE:3}
+// var Scanline  = { VISIBLE:0, POST:1, NMI:2, PRE:3}
 var Mirroring = { VERTICAL:0, HORIZONTAL:1}
 
-// var nesRgb =
-// [ 0x7C7C7CFF, 0x0000FCFF, 0x0000BCFF, 0x4428BCFF, 0x940084FF, 0xA80020FF, 0xA81000FF, 0x881400FF,
-//   0x503000FF, 0x007800FF, 0x006800FF, 0x005800FF, 0x004058FF, 0x000000FF, 0x000000FF, 0x000000FF,
-//   0xBCBCBCFF, 0x0078F8FF, 0x0058F8FF, 0x6844FCFF, 0xD800CCFF, 0xE40058FF, 0xF83800FF, 0xE45C10FF,
-//   0xAC7C00FF, 0x00B800FF, 0x00A800FF, 0x00A844FF, 0x008888FF, 0x000000FF, 0x000000FF, 0x000000FF,
-//   0xF8F8F8FF, 0x3CBCFCFF, 0x6888FCFF, 0x9878F8FF, 0xF878F8FF, 0xF85898FF, 0xF87858FF, 0xFCA044FF,
-//   0xF8B800FF, 0xB8F818FF, 0x58D854FF, 0x58F898FF, 0x00E8D8FF, 0x787878FF, 0x000000FF, 0x000000FF,
-//   0xFCFCFCFF, 0xA4E4FCFF, 0xB8B8F8FF, 0xD8B8F8FF, 0xF8B8F8FF, 0xF8A4C0FF, 0xF0D0B0FF, 0xFCE0A8FF,
-//   0xF8D878FF, 0xD8F878FF, 0xB8F8B8FF, 0xB8F8D8FF, 0x00FCFCFF, 0xF8D8F8FF, 0x000000FF, 0x000000FF ];
+
+const VISIBLE = 0;
+const POST = 1;
+const NMI  = 2;
+const PRE  = 3;
 
 
-  var nesRgb = [
+// temp
+var reg_
+
+var nesRgb = [
   0xFF7C7C7C,0xFFFC0000,0xFFBC0000,0xFFBC2844,0xFF840094,0xFF2000A8,0xFF0010A8,0xFF001488,
   0xFF003050,0xFF007800,0xFF006800,0xFF005800,0xFF584000,0xFF000000,0xFF000000,0xFF000000,
   0xFFBCBCBC,0xFFF87800,0xFFF85800,0xFFFC4468,0xFFCC00D8,0xFF5800E4,0xFF0038F8,0xFF105CE4,
@@ -21,22 +20,14 @@ var Mirroring = { VERTICAL:0, HORIZONTAL:1}
   0xFF00B8F8,0xFF18F8B8,0xFF54D858,0xFF98F858,0xFFD8E800,0xFF787878,0xFF000000,0xFF000000,
   0xFFFCFCFC,0xFFFCE4A4,0xFFF8B8B8,0xFFF8B8D8,0xFFF8B8F8,0xFFC0A4F8,0xFFB0D0F0,0xFFA8E0FC,
   0xFF78D8F8,0xFF78F8D8,0xFFB8F8B8,0xFFD8F8B8,0xFFFCFC00,0xFFF8D8F8,0xFF000000,0xFF000000];
-// var nesRgb =
-// [ 0x7C7C7C, 0x0000FC, 0x0000BC, 0x4428BC, 0x940084, 0xA80020, 0xA81000, 0x881400,
-//   0x503000, 0x007800, 0x006800, 0x005800, 0x004058, 0x000000, 0x000000, 0x000000,
-//   0xBCBCBC, 0x0078F8, 0x0058F8, 0x6844FC, 0xD800CC, 0xE40058, 0xF83800, 0xE45C10,
-//   0xAC7C00, 0x00B800, 0x00A800, 0x00A844, 0x008888, 0x000000, 0x000000, 0x000000,
-//   0xF8F8F8, 0x3CBCFC, 0x6888FC, 0x9878F8, 0xF878F8, 0xF85898, 0xF87858, 0xFCA044,
-//   0xF8B800, 0xB8F818, 0x58D854, 0x58F898, 0x00E8D8, 0x787878, 0x000000, 0x000000,
-//   0xFCFCFC, 0xA4E4FC, 0xB8B8F8, 0xD8B8F8, 0xF8B8F8, 0xF8A4C0, 0xF0D0B0, 0xFCE0A8,
-//   0xF8D878, 0xD8F878, 0xB8F8B8, 0xB8F8D8, 0x00FCFC, 0xF8D8F8, 0x000000, 0x000000 ];
+
 
 var Sprite    = function(){
-    this.id   = new Uint8Array(1)
-    this.x    = new Uint8Array(1)
-    this.y    =  new Uint8Array(1)
-    this.tile = new Uint8Array(1)
-    this.attr = new Uint8Array(1)
+    this.id    = new Uint8Array(1)
+    this.x     = new Uint8Array(1)
+    this.y     = new Uint8Array(1)
+    this.tile  = new Uint8Array(1)
+    this.attr  = new Uint8Array(1)
     this.dataL = new Uint8Array(1)
     this.dataH = new Uint8Array(1)
 }
@@ -430,14 +421,8 @@ var atLatchH = false;
 var scanline = 0;
 var dot = 0;
 var frameOdd = 0;
-var cycle_addr = 0; 
 
-var addr_VISIBLE = new Uint16Array(1);
-var addr_Post = new Uint16Array(1);
-var addr_NMI = new Uint16Array(1);
-var addr_PRE =new Uint16Array(1);
-
-// var addr_array = new Uint16Array(4)
+var addr_array = new Uint16Array(4)
 
 
 function rendering(){
@@ -506,12 +491,8 @@ function reload_shift(){
 
 
 function clear_oam(){
-    // console.log("clear")
     for (var i = 0; i <= 8; i++)
     {
-        // if (secOam[i] == undefined){
-        //     secOam[i] = new Sprite()
-        // }
         secOam[i].id[0]    = 64;
         secOam[i].y[0]     = 0xFF;
         secOam[i].tile[0]  = 0xFF;
@@ -531,10 +512,6 @@ function eval_sprites(){
         // If the sprite is in the scanline, copy its properties into secondary OAM:
         if (line >= 0 && line < spr_height())
         {
-            // if (secOam[n] == undefined){
-            //     secOam[n] = new Sprite();
-            // }
-            // console.log(secOam, n)
             secOam[n].id[0]   = i;
             secOam[n].y[0]    = oamMem[i*4 + 0];
             secOam[n].tile[0] = oamMem[i*4 + 1];
@@ -585,6 +562,7 @@ PPU.prototype.debugPixels = function(){
 }
 
 
+var sprY = new Uint8Array(1);
 PPU.prototype.load_sprites = function(){
     var addr;
     for (var i = 0; i < 8; i++)
@@ -598,7 +576,7 @@ PPU.prototype.load_sprites = function(){
         else
             addr = ( ctrl.get_sprTbl() * 0x1000) + ( oam[i].tile[0]       * 16);
 
-        var sprY = new Uint8Array(1);
+        sprY[0] = 0;
         sprY[0] = (scanline - oam[i].y[0]) % spr_height();  // Line inside the sprite.
         if (oam[i].attr[0] & 0x80) {
             sprY[0] ^= spr_height() - 1;      // Vertical flip.
@@ -612,9 +590,13 @@ PPU.prototype.load_sprites = function(){
 }
 
 
+var sprX = new Uint8Array(1);
+var sprPalette = new Uint8Array(1);
+var palette = new Uint8Array(1);
+var objPalette = new Uint8Array(1);
 PPU.prototype.pixel = function(){
-    var palette = new Uint8Array(1);
-    var objPalette = new Uint8Array(1);
+    palette[0] = 0;
+    objPalette[0] = 0;
     var objPriority = 0;
 
     var x = dot - 2;
@@ -634,7 +616,7 @@ PPU.prototype.pixel = function(){
             for (var i = 7; i >= 0; i--)
             {
                 if (oam[i].id[0] == 64) continue;  // Void entry.
-                var sprX = new Uint8Array(1);
+                sprX[0] = 0;
                 sprX[0] = x - oam[i].x[0];
                 if (sprX[0] >= 8) continue;            // Not in range.
 
@@ -643,7 +625,7 @@ PPU.prototype.pixel = function(){
                     sprX[0] ^= 7;  // Horizontal flip.
                 }
 
-                var sprPalette = new Uint8Array(1);
+                sprPalette[0] = 0;
                 sprPalette[0] = (NTH_BIT(oam[i].dataH[0], 7 - sprX[0]) << 1) |
                                  NTH_BIT(oam[i].dataL[0], 7 - sprX[0]);
                 if (sprPalette[0] == 0) continue;  // Transparent pixel.
@@ -674,36 +656,22 @@ PPU.prototype.pixel = function(){
 
 
 PPU.prototype.scanline_cycle = function(s){
-    // console.log("s:", s, dot)
-    switch(s){
-        case Scanline.NMI:
-            cycle_addr = addr_NMI; break;
-        case Scanline.POST:
-            cycle_addr = addr_Post; break;
-        case Scanline.VISIBLE:
-            cycle_addr = addr_VISIBLE; break;
-        case Scanline.PRE:
-            cycle_addr = addr_PRE; break;
-    }
-    // cycle_addr = addr_array[s]
-
-    // console.log(cycle_addr[0])
-    if (s == Scanline.NMI && dot == 1) { 
+    if (s == NMI && dot == 1) { 
         status.set_vBlank(true); 
         if (ctrl.get_nmi()) this.nes.cpu.set_nmi(); 
     }
-    else if (s == Scanline.POST &&  dot == 0){
+    else if (s == POST &&  dot == 0){
         if (this.display != undefined){
             this.display.draw(pixels)
         }
-    } //NesWindow::setFrame(pixels); //GUI::new_frame(pixels);
-    else if (s == Scanline.VISIBLE || s == Scanline.PRE)
+    } 
+    else if (s == VISIBLE || s == PRE)
     {
         // Sprites:
         switch (dot)
         {
             case   1: clear_oam(); 
-            if (s == Scanline.PRE) { 
+            if (s == PRE) { 
                 status.set_sprOvf(false); 
                 status.set_sprHit(false); 
             } break;
@@ -718,25 +686,25 @@ PPU.prototype.scanline_cycle = function(s){
                 switch (dot % 8)
                 {
                     // Nametable:
-                    case 1:  cycle_addr[0]  = nt_addr(); reload_shift(); break;
-                    case 2:  nt    = this.rd(cycle_addr[0]);  break;
+                    case 1:  addr_array[s]  = nt_addr(); reload_shift(); break;
+                    case 2:  nt    = this.rd(addr_array[s]);  break;
                     // Attribute:
-                    case 3:  cycle_addr[0]  = at_addr(); break;
-                    case 4:  at    = this.rd(cycle_addr[0]); 
+                    case 3:  addr_array[s]  = at_addr(); break;
+                    case 4:  at    = this.rd(addr_array[s]); 
                              if (vAddr.get_cY() & 2) at >>= 4;
                              if (vAddr.get_cX() & 2) at >>= 2; break;
                     // Background (low bits):
-                    case 5:  cycle_addr[0]  = bg_addr(); break;
-                    case 6:  bgL   = this.rd(cycle_addr[0]);  break;
+                    case 5:  addr_array[s]  = bg_addr(); break;
+                    case 6:  bgL   = this.rd(addr_array[s]);  break;
                     // Background (high bits):
-                    case 7:  cycle_addr[0] += 8;         break;
-                    case 0:  bgH   = this.rd(cycle_addr[0]); 
+                    case 7:  addr_array[s] += 8;         break;
+                    case 0:  bgH   = this.rd(addr_array[s]); 
                              h_scroll(); break;
                 }
         }
         else if (dot == 256){
             this.pixel(); 
-            bgH = this.rd(cycle_addr[0]); 
+            bgH = this.rd(addr_array[s]); 
             v_scroll(); // Vertical bump.
         }
         else if (dot == 257){
@@ -745,19 +713,19 @@ PPU.prototype.scanline_cycle = function(s){
             h_update();
         }
         else if (dot >= 280 && dot <= 304){
-            if (s == Scanline.PRE)        
+            if (s == PRE)        
                 v_update();
         }else if (dot == 1){
-            cycle_addr[0]= nt_addr();
-            if (s == Scanline.PRE)
+            addr_array[s]= nt_addr();
+            if (s == PRE)
                status.set_vBlank(false);
         }else if (dot == 321 || dot == 339){
-            cycle_addr[0] = nt_addr();
+            addr_array[s] = nt_addr();
         }else if (dot == 338){
-            nt = this.rd(cycle_addr[0]);
+            nt = this.rd(addr_array[s]);
         }else if (dot == 340){
-            nt = this.rd(cycle_addr[0]);
-            if (s == Scanline.PRE && rendering() && frameOdd) 
+            nt = this.rd(addr_array[s]);
+            if (s == PRE && rendering() && frameOdd) 
                 dot++;
         }
         // Signal scanline to mapper:
@@ -793,15 +761,15 @@ PPU.prototype.wr = function(addr, v){
 PPU.prototype.step = function(){
     // console.log("scanline:", scanline)
     if (scanline >= 0 && scanline <= 239){
-        this.scanline_cycle(Scanline.VISIBLE);
+        this.scanline_cycle(VISIBLE);
     }
     else if (scanline == 240){
-        this.scanline_cycle(Scanline.POST)
+        this.scanline_cycle(POST)
     }
     else if (scanline == 241){
-        this.scanline_cycle(Scanline.NMI)
+        this.scanline_cycle(NMI)
     }else if (scanline == 261){
-        this.scanline_cycle(Scanline.PRE)
+        this.scanline_cycle(PRE)
     }
     // Update dot and scanline counters:
     if (++dot > 340)
@@ -891,7 +859,7 @@ PPU.prototype.reset = function(){
 
     for (var i = 0; i <= 8; ++i) {
         secOam[i] = new Sprite()
-        oam[i] = new Sprite()
+        oam[i]    = new Sprite()
     }
     console.log("reset")
 }

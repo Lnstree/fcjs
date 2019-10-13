@@ -18,8 +18,8 @@ var Nes = function(){
 
 Nes.prototype.loadFile = function(){
     // var data = fs.readFileSync('D:/nestest/mlo.nes');
-    // var data = fs.readFileSync('D:/nestest/hdl.nes');
-    var data = fs.readFileSync('/Users/yll/Project/nodejs/fcjs/nestest/hdl.nes');
+    var data = fs.readFileSync('D:/nestest/hdl.nes');
+    // var data = fs.readFileSync('/Users/yll/Project/nodejs/fcjs/nestest/hdl.nes');
     // console.log("AAAAAAAAAA",data)
     data = Int16Array.from(data)
     this.cartridge.load(data)
@@ -54,7 +54,7 @@ Nes.prototype.registerDisplay = function(display){
 
 
 Nes.prototype.benchmarks = function(){
-    var fr= 120;
+    var fr= 500;
     var begin = new Date();
     console.log(begin);
     while (fr--) {
@@ -67,7 +67,8 @@ Nes.prototype.benchmarks = function(){
 }
 
 Nes.prototype.loadTest = function(){
-    var data = fs.readFileSync('/Users/yll/Project/nodejs/fcjs/nestest/hdl.nes');
+    var data = fs.readFileSync('D:/nestest/hdl.nes');
+    // var data = fs.readFileSync('/Users/yll/Project/nodejs/fcjs/nestest/hdl.nes');
     data = Int16Array.from(data)
     this.cartridge.load(data)
     this.benchmarks()

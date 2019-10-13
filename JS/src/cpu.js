@@ -6,10 +6,6 @@ var Flags = function(){
     this.flag = 0 | (1 << 5);
 }
 
-function NTH_BIT(x, n){
-    return ((x) >> (n)) & 1;
-}
-
 Flags.prototype.get = function(){
     return this.flag;
 }
@@ -37,6 +33,14 @@ var PC = new Uint16Array(1);
 var ram = new Uint8Array(0x800);
 var TOTAL_CYCLES = 29781;
 
+
+// convert temp
+var reg_i16 = new Int16Array(1);
+var reg_u16 = new Uint16Array(1);
+var reg_u16_a = new Uint16Array(1);
+var reg_u16_b = new Uint16Array(1);
+var reg_u8  = new Uint8Array(1);
+var reg_i8  = new Int8Array(1);
 
 
 var  CPU = function(nes){
@@ -89,10 +93,9 @@ CPU.prototype.upd_cv = function(x, y, r) {
 }
 
 CPU.prototype.upd_nz = function(x) {
-    var temp = new Uint8Array(1);
-    temp[0] = x
-    P.setFlag(Flag.N,  temp[0] & 0x80); 
-    P.setFlag(Flag.Z, (temp[0] == 0)); 
+    reg_u8[0] = x;
+    P.setFlag(Flag.N,  reg_u8[0] & 0x80); 
+    P.setFlag(Flag.Z, (reg_u8[0] == 0)); 
 }
 
 
@@ -147,22 +150,17 @@ CPU.prototype.rd = function(a){
 }
 
 CPU.prototype.rd16_d = function(a, b){
-    // console.log("DDD", this.rd(a) | (this.rd(b) << 8));
-    var temp = new Uint16Array(1);
-    var tempa = new Uint16Array(1);
-    var tempb =  new Uint16Array(1);
-    tempa[0] = this.rd(a);
-    tempb[0] = this.rd(b) << 8;
-    temp[0] = tempa[0] | tempb[0];
-    return temp[0];
+    reg_u16_a[0] = this.rd(a);
+    reg_u16_b[0] = this.rd(b) << 8;
+    reg_u16[0] = reg_u16_a[0] | reg_u16_b[0];
+    return reg_u16[0];
 }
 
 CPU.prototype.rd16 = function(a){return this.rd16_d(a, a+1);}
 CPU.prototype.push = function(v){return this.wr(0x100 + (S[0]--), v);}
 CPU.prototype.pop  = function(v){
-    var temp = new  Uint8Array(1)
-    temp[0] =  this.rd(0x100 + (++S[0]));
-    return temp[0];
+    reg_u8[0] =  this.rd(0x100 + (++S[0]));
+    return reg_u8[0];
 }
 
 //address 
@@ -202,104 +200,84 @@ CPU.prototype.st_A_aby = function(){
 
 // var a = this.m()
 CPU.prototype.ld = function(r, m){
-    var a = new Uint16Array(1);
-    var p = new Uint8Array(1);
-    a[0] = m();
-    p[0] = this.rd(a[0]);
+    reg_u16[0] = m();
+    reg_u8[0] = this.rd(reg_u16[0]);
     // console.log("ll", a, p);
-    r[0] = p[0];
-    this.upd_nz(p[0]);
+    r[0] = reg_u8[0];
+    this.upd_nz(reg_u8[0]);
 }
 
 CPU.prototype.cmp = function(r, m){
-    var a = new Uint16Array(1);
-    var p = new Uint8Array(1);
-    a[0] = m();
-    p[0] = this.rd(a[0]);
-    this.upd_nz(r - p[0]);
-    P.setFlag(Flag.C, (r >= p[0]));
+    reg_u16[0] = m();
+    reg_u8[0] = this.rd(reg_u16[0]);
+    this.upd_nz(r - reg_u8[0]);
+    P.setFlag(Flag.C, (r >= reg_u8[0]));
 }
 
 // aruthmetic 
 
 CPU.prototype.ADC = function(m){
-    var a = new Uint16Array(1);
-    var p = new Uint8Array(1);
-    var r = new Int16Array(1);
-    a[0] = m();
-    p[0] = this.rd(a[0]);
-    r[0] = A[0] + p[0] + P.index(Flag.C);
-    this.upd_cv(A[0], p[0], r[0]);
-    A[0] = r[0];
+    reg_u16[0] = m();
+    reg_u8[0] = this.rd(reg_u16[0]);
+    reg_i16[0] = A[0] + reg_u8[0] + P.index(Flag.C);
+    this.upd_cv(A[0], reg_u8[0], reg_i16[0]);
+    A[0] = reg_i16[0];
     this.upd_nz(A[0]);
 }
 
 CPU.prototype.SBC = function(m){
-    var a = new Uint16Array(1);
-    var p = new Uint8Array(1);
-    var r = new Int16Array(1);
-    a[0] = m();
-    p[0] = this.rd(a[0]) ^ 0xFF;
-    r[0] = A[0] + p[0] + P.index(Flag.C);
-    this.upd_cv(A[0], p[0], r[0]);
-    A[0] = r[0];
+    reg_u16[0] = m();
+    reg_u8[0] = this.rd(reg_u16[0]) ^ 0xFF;
+    reg_i16[0] = A[0] + reg_u8[0] + P.index(Flag.C);
+    this.upd_cv(A[0], reg_u8[0], reg_i16[0]);
+    A[0] = reg_i16[0];
     this.upd_nz(A[0]);
 }
 
 CPU.prototype.BIT = function(m){
-    var a = new Uint16Array(1);
-    var p = new Uint8Array(1);
-    a[0] = m();
-    p[0] = this.rd(a[0]);
-    P.setFlag(Flag.Z, !(A[0] & p[0]));
-    P.setFlag(Flag.N, p[0] & 0x80);
-    P.setFlag(Flag.V, p[0] & 0x40);
+    reg_u16[0] = m();
+    reg_u8[0] = this.rd(reg_u16[0]);
+    P.setFlag(Flag.Z, !(A[0] & reg_u8[0]));
+    P.setFlag(Flag.N, reg_u8[0] & 0x80);
+    P.setFlag(Flag.V, reg_u8[0] & 0x40);
 }
 
 CPU.prototype.AND = function(m){
-    var a = new Uint16Array(1);
-    var p = new Uint8Array(1);
-    a[0] = m();
-    p[0] = this.rd(a[0]);
-    A[0] &= p[0];
+    reg_u16[0] = m();
+    reg_u8[0] = this.rd(reg_u16[0]);
+    A[0] &= reg_u8[0];
     this.upd_nz(A[0]);
 }
 
 CPU.prototype.EOR = function(m){
-    var a = new Uint16Array(1);
-    var p = new Uint8Array(1);
-    a[0] = m();
-    p[0] = this.rd(a[0]);
-    this.upd_nz(A[0] ^= p[0]);
+    reg_u16[0] = m();
+    reg_u8[0] = this.rd(reg_u16[0]);
+    this.upd_nz(A[0] ^= reg_u8[0]);
 }
 
 CPU.prototype.ORA = function(m){
-    var a = new Uint16Array(1);
-    var p = new Uint8Array(1);
-    a[0] = m();
-    p[0] = this.rd(a[0]);
-    this.upd_nz(A[0] |= p[0]);
+    reg_u16[0] = m();
+    reg_u8[0] = this.rd(reg_u16[0]);
+    this.upd_nz(A[0] |= reg_u8[0]);
 }
 
 CPU.prototype.ASL = function(m){
     var a = new Uint16Array(1);
     var p = new Uint8Array(1);
 
-    a[0] = m();
-    p[0] = this.rd(a[0]);
-    P.setFlag(Flag.C,  p[0] & 0x80);
+    reg_u16[0] = m();
+    reg_u8[0] = this.rd(reg_u16[0]);
+    P.setFlag(Flag.C,  reg_u8[0] & 0x80);
     this.tick();
-    this.upd_nz(this.wr(a[0], p[0] << 1));
+    this.upd_nz(this.wr(reg_u16[0], reg_u8[0] << 1));
 }
 
 CPU.prototype.LSR = function(m){
-    var a = new Uint16Array(1);
-    var p = new Uint8Array(1);
-    a[0] = m();
-    p[0] = this.rd(a[0]);
-    P.setFlag(Flag.C, p & 0x01);
+    reg_u16[0] = m();
+    reg_u8[0] = this.rd(reg_u16[0]);
+    P.setFlag(Flag.C, reg_u8[0] & 0x01);
     this.tick();
-    this.upd_nz(this.wr(a[0], p[0] >> 1));
+    this.upd_nz(this.wr(reg_u16[0], reg_u8[0] >> 1));
 }
 
 CPU.prototype.ROL = function(m){
@@ -330,21 +308,21 @@ CPU.prototype.ROR = function(m){
 }
 
 CPU.prototype.DEC = function(m){
-    var a = new Uint16Array(1);
-    var p = new Uint8Array(1);
-    a[0] = m();
-    p[0] = this.rd(a[0]);
+    // var a = new Uint16Array(1);
+    // var p = new Uint8Array(1);
+    reg_u16[0] = m();
+    reg_u8[0]  = this.rd(reg_u16[0]);
     this.tick();
-    this.upd_nz(this.wr(a[0], --p[0]));
+    this.upd_nz(this.wr(reg_u16[0], --reg_u8[0]));
 }
 
 CPU.prototype.INC = function(m){
-    var a = new Uint16Array(1);
-    var p = new Uint8Array(1);
-    a[0] = m();
-    p[0] = this.rd(a[0]);
+    // var a = new Uint16Array(1);
+    // var p = new Uint8Array(1);
+    reg_u16[0] = m();
+    reg_u8[0] = this.rd(reg_u16[0]);
     this.tick();
-    this.upd_nz(this.wr(a[0], ++p[0]));
+    this.upd_nz(this.wr(reg_u16[0], ++reg_u8[0]));
 }
 
 CPU.prototype.dec = function(r){
@@ -426,18 +404,17 @@ CPU.prototype.PHA= function(){
 }
 
 CPU.prototype.br = function(f, v){
-    var j = new Int8Array([this.rd(this.imm())]);
+    reg_i8[0] = this.rd(this.imm());
     // console.log("P.j", P.index(f), f)
     if (P.index(f) == v){
         this.tick();
-        PC[0] += j[0];
+        PC[0] += reg_i8[0];
     }
 }
 
 CPU.prototype.JMP_IND = function(){
-    var i = new Uint16Array(1);
-    i[0] = this.rd16(this.imm16());
-    PC[0] = this.rd16_d(i[0], (i[0]&0xFF00) | ((i[0]+1) % 0x100));
+    reg_u16[0] = this.rd16(this.imm16());
+    PC[0] = this.rd16_d(reg_u16[0], (reg_u16[0]&0xFF00) | ((reg_u16[0]+1) % 0x100));
 }
 
 CPU.prototype.JMP = function(){
