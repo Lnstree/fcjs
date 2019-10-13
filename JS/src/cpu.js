@@ -3,26 +3,15 @@ var Flag = { C : 0, Z : 1, I : 2, D : 3, V : 6,  N : 7}
 
 
 var Flags = function(){
-    // this.flag = new Int8Array(6);
-    // this.flag.fill(false)
     this.flag = 0 | (1 << 5);
 }
-
 
 function NTH_BIT(x, n){
     return ((x) >> (n)) & 1;
 }
 
-// Flags.prototype.f = new Int8Array(6);
 Flags.prototype.get = function(){
     return this.flag;
-    // return this.flag[Flag.C] | 
-    //        this.flag[Flag.Z] << 1 | 
-    //        this.flag[Flag.I] << 2 | 
-    //        this.flag[Flag.D] << 3 |
-    //        1 << 5 | 
-    //        this.flag[Flag.V] <<  6 |
-    //        this.flag[Flag.N] <<  7;  
 }
 
 Flags.prototype.index = function(index){
@@ -35,16 +24,8 @@ Flags.prototype.setFlag = function(index, v){
     this.flag |=  ((v > 0 )  << index);
 }
 
-
-
 Flags.prototype.set = function(p){
     this.flag = (p | (1 << 5)) & 0xFF 
-    // this.flag[Flag.C] = NTH_BIT(p, 0);
-    // this.flag[Flag.Z] = NTH_BIT(p, 1);
-    // this.flag[Flag.I] = NTH_BIT(p, 2);
-    // this.flag[Flag.D] = NTH_BIT(p, 3);
-    // this.flag[Flag.V] = NTH_BIT(p, 6);
-    // this.flag[Flag.N] = NTH_BIT(p, 7);
 }
 
 var A = new Uint8Array(1);
@@ -101,10 +82,13 @@ CPU.prototype.tick  = function(){
     this.remaininhCycles--;
 }
 
-// update flag
-CPU.prototype.upd_cv = function(x, y, r) {P.setFlag(Flag.C, r > 0xFF);  P.setFlag(Flag.V,  ~(x^y) & (x^r) & 0x80); }
-CPU.prototype.upd_nz = function(x) 
-{
+// 设置进位和溢出
+CPU.prototype.upd_cv = function(x, y, r) {
+    P.setFlag(Flag.C, r > 0xFF); 
+    P.setFlag(Flag.V,  ~(x^y) & (x^r) & 0x80); 
+}
+
+CPU.prototype.upd_nz = function(x) {
     var temp = new Uint8Array(1);
     temp[0] = x
     P.setFlag(Flag.N,  temp[0] & 0x80); 
@@ -490,7 +474,9 @@ CPU.prototype.flag = function(f, v){
 CPU.prototype.INT = function(t){
     this.tick();
    
-    if (t != IntType.BRK) this.tick();
+    if (t != IntType.BRK){
+        this.tick();
+    }
 
     if (t != IntType.REST)
     {
@@ -510,7 +496,6 @@ CPU.prototype.INT = function(t){
     let vect = [0xFFFA, 0xFFFC, 0xFFFE, 0xFFFE];
 
     PC[0] = this.rd16(vect[t]);
-    // console.log("PC:", PC[0])
     if (t == IntType.NMI) this.nmi = false;
 }
 
@@ -523,22 +508,6 @@ CPU.prototype.exec = function(){
     // this.nes.ppu.debugPixels()
     // this.nes.ppu.debugInfo();
     // this.debugInfo()
-
-    // if (PC[0] == 36411 && this.remaininhCycles == 23900)
-    // if (count >= 32) 
-    // {
-        // this.debugInfo()
-        // this.nes.ppu.debugInfo();
-    // }
-    // if (count >= 32 && PC[0] == 33104 && this.remaininhCycles==26972){
-    //     var ddd=0;
-    // }  
-    // if (count >= 32 && PC[0] == 33109 && this.remaininhCycles==26345){
-    //     var ddd=0;
-    // }
-
-
-
     switch (this.rd(PC[0]++))  // Fetch the opcode.
     {
         // Select the right function to emulate the instruction:
@@ -620,7 +589,6 @@ CPU.prototype.exec = function(){
         case 0xFE: return this.INC(this._abx.bind(this)) ;
         default:
         {
-        //   std::cout << "Invalid OPcode! PC: " << PC << " OPcode: 0x" << std::hex << (int)rd(PC-1) << "\n";
           console.log("Invalid OPcode! PC:",  PC[0],  " OOP:", this.rd(PC[0]-1) )
           return this.NOP();
         }
@@ -643,8 +611,6 @@ CPU.prototype.power = function(){
 
 
 CPU.prototype.run_frame = function(){
-
-    count++;
     this.remaininhCycles += TOTAL_CYCLES;
     while (this.remaininhCycles > 0){
         if (this.nmi) this.INT(IntType.NMI);

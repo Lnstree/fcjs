@@ -41,6 +41,16 @@ var Sprite    = function(){
     this.dataH = new Uint8Array(1)
 }
 
+Sprite.prototype.copy = function(item){
+    this.id[0] = item.id[0]
+    this.x[0]  = item.x[0]
+    this.y[0]  = item.y[0]
+    this.tile[0] = item.tile[0]
+    this.attr[0] = item.attr[0]
+    this.dataL[0] = item.dataL[0]
+    this.dataH[0] = item.dataH[0]
+}
+
 
 var Ctrl = function(){
     this.data = 0
@@ -389,6 +399,7 @@ var pixels    = new Uint32Array(256 * 240);
 var ciRam     = new Uint8Array(0x800);
 var cgRam     = new Uint8Array(0x20);
 var oamMem    = new Uint8Array(0x100);
+
 var oam       = new Array(8);
 var secOam    = new Array(8);
 
@@ -425,6 +436,8 @@ var addr_VISIBLE = new Uint16Array(1);
 var addr_Post = new Uint16Array(1);
 var addr_NMI = new Uint16Array(1);
 var addr_PRE =new Uint16Array(1);
+
+// var addr_array = new Uint16Array(4)
 
 
 function rendering(){
@@ -494,11 +507,11 @@ function reload_shift(){
 
 function clear_oam(){
     // console.log("clear")
-    for (var i = 0; i < 8; i++)
+    for (var i = 0; i <= 8; i++)
     {
-        if (secOam[i] == undefined){
-            secOam[i] = new Sprite()
-        }
+        // if (secOam[i] == undefined){
+        //     secOam[i] = new Sprite()
+        // }
         secOam[i].id[0]    = 64;
         secOam[i].y[0]     = 0xFF;
         secOam[i].tile[0]  = 0xFF;
@@ -518,9 +531,10 @@ function eval_sprites(){
         // If the sprite is in the scanline, copy its properties into secondary OAM:
         if (line >= 0 && line < spr_height())
         {
-            if (secOam[n] == undefined){
-                secOam[n] = new Sprite();
-            }
+            // if (secOam[n] == undefined){
+            //     secOam[n] = new Sprite();
+            // }
+            // console.log(secOam, n)
             secOam[n].id[0]   = i;
             secOam[n].y[0]    = oamMem[i*4 + 0];
             secOam[n].tile[0] = oamMem[i*4 + 1];
@@ -541,7 +555,6 @@ function  NTH_BIT(x, n) { return ((x) >> (n)) & 1;}
 
 var PPU = function(nes){
     this.nes = nes;
-    
 }
 
 
@@ -576,7 +589,9 @@ PPU.prototype.load_sprites = function(){
     var addr;
     for (var i = 0; i < 8; i++)
     {
-        oam[i] =  JSON.parse(JSON.stringify(secOam[i]));  // Copy secondary OAM into primary.
+        // oam[i] =  JSON.parse(JSON.stringify(secOam[i]));  // Copy secondary OAM into primary.
+        // console.log(oam,i)
+        oam[i].copy(secOam[i])
         // Different address modes depending on the sprite height:
         if (spr_height() == 16)
             addr = ((oam[i].tile[0] & 1) * 0x1000) + ((oam[i].tile[0] & ~1) * 16);
@@ -670,6 +685,7 @@ PPU.prototype.scanline_cycle = function(s){
         case Scanline.PRE:
             cycle_addr = addr_PRE; break;
     }
+    // cycle_addr = addr_array[s]
 
     // console.log(cycle_addr[0])
     if (s == Scanline.NMI && dot == 1) { 
@@ -687,9 +703,10 @@ PPU.prototype.scanline_cycle = function(s){
         switch (dot)
         {
             case   1: clear_oam(); 
-            if (s == Scanline.PRE) 
-            {   status.set_sprOvf(false); 
-                status.set_sprHit(false); } break;
+            if (s == Scanline.PRE) { 
+                status.set_sprOvf(false); 
+                status.set_sprHit(false); 
+            } break;
             case 257: eval_sprites(); break;
             case 321: this.load_sprites(); break;
         }
@@ -705,8 +722,9 @@ PPU.prototype.scanline_cycle = function(s){
                     case 2:  nt    = this.rd(cycle_addr[0]);  break;
                     // Attribute:
                     case 3:  cycle_addr[0]  = at_addr(); break;
-                    case 4:  at    = this.rd(cycle_addr[0]);  if (vAddr.get_cY() & 2) at >>= 4;
-                                                if (vAddr.get_cX() & 2) at >>= 2; break;
+                    case 4:  at    = this.rd(cycle_addr[0]); 
+                             if (vAddr.get_cY() & 2) at >>= 4;
+                             if (vAddr.get_cX() & 2) at >>= 2; break;
                     // Background (low bits):
                     case 5:  cycle_addr[0]  = bg_addr(); break;
                     case 6:  bgL   = this.rd(cycle_addr[0]);  break;
@@ -717,21 +735,30 @@ PPU.prototype.scanline_cycle = function(s){
                 }
         }
         else if (dot == 256){
-            this.pixel(); bgH = this.rd(cycle_addr[0]); v_scroll(); // Vertical bump.
+            this.pixel(); 
+            bgH = this.rd(cycle_addr[0]); 
+            v_scroll(); // Vertical bump.
         }
         else if (dot == 257){
-            this.pixel(); reload_shift(); h_update();
+            this.pixel();
+            reload_shift();
+            h_update();
         }
         else if (dot >= 280 && dot <= 304){
-            if (s == Scanline.PRE)            v_update();
+            if (s == Scanline.PRE)        
+                v_update();
         }else if (dot == 1){
-            cycle_addr[0]= nt_addr(); if (s == Scanline.PRE) status.set_vBlank(false);
+            cycle_addr[0]= nt_addr();
+            if (s == Scanline.PRE)
+               status.set_vBlank(false);
         }else if (dot == 321 || dot == 339){
             cycle_addr[0] = nt_addr();
         }else if (dot == 338){
             nt = this.rd(cycle_addr[0]);
         }else if (dot == 340){
-            nt = this.rd(cycle_addr[0]); if (s == Scanline.PRE && rendering() && frameOdd) dot++;
+            nt = this.rd(cycle_addr[0]);
+            if (s == Scanline.PRE && rendering() && frameOdd) 
+                dot++;
         }
         // Signal scanline to mapper:
         if (dot == 260 && rendering()) this.nes.cartridge.signal_scanline();
@@ -744,7 +771,9 @@ PPU.prototype.rd = function(addr){
     }else if (addr >= 0x2000 & addr <= 0x3EFF){
         return ciRam[this.nt_mirror(addr)];
     }else if (addr >= 0x3F00 && addr <= 0x3FFF){
-        if ((addr & 0x13) == 0x10) addr &= ~0x10;
+        if ((addr & 0x13) == 0x10) {
+            addr &= ~0x10;
+        }
         return cgRam[addr & 0x1F] & (mask.get_gray() ? 0x30: 0xFF);
     }
     return 0;
@@ -860,10 +889,11 @@ PPU.prototype.reset = function(){
     ciRam.fill(0xFF);
     oamMem.fill(0);
 
-    for (var i = 0; i < 8; ++i) {
+    for (var i = 0; i <= 8; ++i) {
         secOam[i] = new Sprite()
+        oam[i] = new Sprite()
     }
-
+    console.log("reset")
 }
 
 

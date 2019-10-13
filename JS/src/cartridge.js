@@ -16,14 +16,13 @@ Cartridge.prototype.load = function(raw){
     let mapperNum = (raw[7] & 0xF0) | (raw[6] >> 4);
     this.mapper   = null;
 
+    this.nes.ppu.reset();
     console.log("mapper:", mapperNum)
     switch(mapperNum){
         case 0: this.mapper = new Mapper.Mapper0(this.nes, raw); this.mapper.init(); break;
         case 2: this.mapper = new Mapper.Mapper2(this.nes, raw); this.mapper.init(); break;
     }
-
     this.nes.cpu.power();
-    this.nes.ppu.reset();
 }
 
 Cartridge.prototype.loadUrl = function(rom){
