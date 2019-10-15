@@ -49,9 +49,17 @@ Nes.prototype.registerDisplay = function(display){
     this.ppu.set_display(display)
 }
 
-
-
-
+Nes.prototype.benchmarks = function(){
+    var fr= 500;
+    var begin = new Date();
+    console.log(begin);
+    while (fr--) {
+        nes.cpu.run_frame()
+    }
+    var end = new Date();
+    console.log(end)
+    console.log("Time:", end - begin + "ms")
+}
 
 Nes.prototype.benchmarks = function(){
     var fr= 500;
@@ -63,7 +71,6 @@ Nes.prototype.benchmarks = function(){
     var end = new Date();
     console.log(end)
     console.log("Time:", end - begin + "ms")
-    
 }
 
 Nes.prototype.loadTest = function(){
@@ -77,3 +84,4 @@ Nes.prototype.loadTest = function(){
 var nes = new Nes()
 // nes.loadFile();
 nes.loadTest()
+
