@@ -1,0 +1,1 @@
+emcc -s WASM=0 -s  cpu.cpp ppu.cpp cartridge.cpp mapper.cpp joypad.cpp gui.cpp -o ./asm/fc.js
